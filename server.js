@@ -6,19 +6,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const API_KEY = process.env.AI_API_KEY;
+// المفتاح مخفي ويأخذ من Environment Variable
+const AI_API_KEY = process.env.AI_API_KEY;
+
+// فلترة Minecraft فقط
+function isMinecraftRelated(text) {
+  return /minecraft|mod|mods|forge|fabric|redstone|creeper|ender/i.test(text);
+}
 
 app.post("/ai", async (req, res) => {
-  const msg = req.body.message;
+  const { message } = req.body;
 
-  if (!msg) {
+  if (!message) {
     return res.json({ reply: "✍️ اكتب سؤالك عن Minecraft" });
   }
 
-  if (!/minecraft|mod|mods|forge|fabric|redstone/i.test(msg)) {
-    return res.json({
-      reply: "❌ هذا الشات مخصص لماينكرافت فقط."
-    });
+  if (!isMinecraftRelated(message)) {
+    return res.json({ reply: "❌ هذا الشات مخصص لماينكرافت فقط." });
   }
 
   try {
@@ -28,7 +32,7 @@ app.post("/ai", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`
+          "Authorization": `Bearer ${AI_API_KEY}`,
         },
         body: JSON.stringify({
           model: "gpt-4o-mini",
@@ -36,9 +40,9 @@ app.post("/ai", async (req, res) => {
             {
               role: "system",
               content:
-                "أنت مساعد خبير في Minecraft فقط. أجب بدقة وبأسلوب واضح."
+                "أنت مساعد Minecraft فقط، أجب بدقة عن المودات، الميكانيكيات، والاقتراحات."
             },
-            { role: "user", content: msg }
+            { role: "user", content: message }
           ]
         })
       }
@@ -48,12 +52,11 @@ app.post("/ai", async (req, res) => {
     res.json({ reply: data.choices[0].message.content });
 
   } catch (error) {
-    res.status(500).json({ reply: "❌ خطأ في السيرفر" });
+    console.error(error);
+    res.status(500).json({ reply: "❌ حدث خطأ في السيرفر" });
   }
 });
 
-// التعديل هنا: استخدام المنفذ الذي تحدده المنصة تلقائياً
+// استخدام المنفذ من Render أو 3000 محليًا
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server Running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server Running on port ${PORT}`));
