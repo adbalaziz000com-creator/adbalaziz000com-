@@ -47,11 +47,13 @@ app.post("/ai", async (req, res) => {
     const data = await response.json();
     res.json({ reply: data.choices[0].message.content });
 
-  } catch {
+  } catch (error) {
     res.status(500).json({ reply: "❌ خطأ في السيرفر" });
   }
 });
 
-app.listen(3000, () => {
-  console.log("✅ Server Running");
+// التعديل هنا: استخدام المنفذ الذي تحدده المنصة تلقائياً
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Server Running on port ${PORT}`);
 });
